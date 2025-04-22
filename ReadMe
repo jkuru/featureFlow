@@ -1,22 +1,31 @@
-Finish Boot
-  a) Get Instance of Application
-  b) Use Hilt
-  c) Load Route
-  d) Load Interceptor
-  e) App level State Store
-  f)
 
-  Activity + MVI with Non Application State Store for Feature Module
-   a) Hook to load module
-   a2) UX behaviour based on config
-   b) Bind the data to state store to Navigation control jetpack compose ?
-   c) Define a generic entry class for each module
-   d) Route to new Module
+How will component get events ?
 
-   Recommendation
-   a) New modules can use any dependency
-   b) New modules will have to use jetpack navigation
-   c) Back stack , should we use synthetic navigation
+As part of bootstrapper , the google play framework is registered with listener and actively listening to any install request  and its corresponding outcome events
 
-   --- Test with plant feature ---
-   --- Make everything functions and use functional composition
+All events for a module will flow to state store , DFComponentStateStore
+
+Component/ App layer  will consume events from
+
+##################################################### Complete flow ######################################################################
+
+Deep Link       --->  Component Activity --->  Headless Component Install Compose function ---> N
+App Navigation  --->  Component Activity --->  Headless Component Install Compose function ---> N
+
+Headless Component Install Compose function ---> N
+Headless Component Install Compose function ---> state store --->
+       MVI pattern if module not installed then same as get data . trigger module install -->
+           Headless Component Install Compose function gets raw events from listener compute and update the state store
+
+           Events will flow using event sourcing pattern to event execution context which will compute the state and update the state store
+
+           The execution context will read config and execute before and after interceptors
+
+           The interceptors can be any behaviors
+
+             a) Service loader
+             b) Post install analytics
+
+
+----- Additional  Notes ----------
+ Deep link with data , native navigation with data
