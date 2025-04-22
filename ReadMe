@@ -1,0 +1,22 @@
+Finish Boot
+  a) Get Instance of Application
+  b) Use Hilt
+  c) Load Route
+  d) Load Interceptor
+  e) App level State Store
+  f)
+
+  Activity + MVI with Non Application State Store for Feature Module
+   a) Hook to load module
+   a2) UX behaviour based on config
+   b) Bind the data to state store to Navigation control jetpack compose ?
+   c) Define a generic entry class for each module
+   d) Route to new Module
+
+   Recommendation
+   a) New modules can use any dependency
+   b) New modules will have to use jetpack navigation
+   c) Back stack , should we use synthetic navigation
+
+   --- Test with plant feature ---
+   --- Make everything functions and use functional composition
