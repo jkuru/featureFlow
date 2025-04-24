@@ -1,3 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">FeatureFlow</string>
+    <string name="retry">Retry</string>
+    <string name="loading">Loading feature…</string>
+    <string name="error">Error</string>
+    <string name="feature_loaded">Feature Loaded</string>
+    <string name="installation_complete">Installation Complete</string>
 </resources>

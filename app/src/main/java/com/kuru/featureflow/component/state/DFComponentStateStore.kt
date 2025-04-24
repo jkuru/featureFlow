@@ -1,18 +1,21 @@
 package com.kuru.featureflow.component.state
 
+import kotlinx.coroutines.flow.StateFlow
 
 /**
- * Application Level State Store
- * Handle all the lister data for UniDirectional flow of data
+ * Role of DFComponentStateStore
+ * The DFComponentStateStore is designed as the single source of truth for the raw, application-wide state of features. Here’s what it does:
  *
- *  Status of Install
- *  Status of Interceptors
+ * Centralized State Management: It holds the installation states (InstallationState) and interceptor states (InterceptorState) for all features, accessible across the app.
+ * Persistence: It uses SharedPreferences to store data like the last attempted URI, ensuring durability across app restarts.
+ * Raw Data: It provides states like NotInstalled, Installing, Installed, or Failed, which reflect the actual status of feature installations.
  */
-sealed class DFComponentStateStore {
-    data object NotInstalled : DFComponentStateStore()
-    data object Loading : DFComponentStateStore()
-    data class Downloading(val progress: Float) : DFComponentStateStore()
-    data object Installed : DFComponentStateStore()
-    data class ConfirmationRequired(val confirm: () -> Unit) : DFComponentStateStore()
-    data class Error(val message: String) : DFComponentStateStore()
+interface DFComponentStateStore {
+    fun getLastAttemptedFeature(): String?
+    fun setLastAttemptedFeature(uri: String)
+    fun getInstallationState(feature: String): InstallationState
+    fun setInstallationState(feature: String, state: InstallationState)
+    fun getInterceptorState(interceptorId: String): InterceptorState
+    fun setInterceptorState(interceptorId: String, state: InterceptorState)
+    fun getInstallationStateFlow(feature: String): StateFlow<InstallationState>
 }

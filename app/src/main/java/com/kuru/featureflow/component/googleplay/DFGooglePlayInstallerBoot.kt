@@ -1,6 +1,7 @@
 package com.kuru.featureflow.component.googleplay
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.google.android.play.core.splitinstall.SplitInstallManager
 import com.google.android.play.core.splitinstall.SplitInstallStateUpdatedListener
 import com.kuru.featureflow.component.register.DFComponentRegistry
@@ -17,17 +18,8 @@ interface DFGooglePlayInstallerBoot {
      */
     fun initialize(
         context: Context,
-        sharedPreferencesFileName: String,
-        DFComponentRegistry: DFComponentRegistry
+        componentRegistry: DFComponentRegistry,
+        scope: CoroutineScope
     ): DFComponentInstaller
 
-    /**
-     * Should clean up at Boot level T
-     * TODO
-     */
-    fun cleanup(
-        manager: SplitInstallManager,
-        scope: CoroutineScope,
-        listener: SplitInstallStateUpdatedListener
-    )
 }

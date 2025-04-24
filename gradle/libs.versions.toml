@@ -1,38 +1,87 @@
+# gradle/libs.versions.toml
+
 [versions]
-agp = "8.5.0"
-gson = "2.12.1"
-kotlin = "1.9.0"
-coreKtx = "1.15.0"
+# --- Core Build Tool Versions ---
+agp = "8.5.2"
+kotlin = "2.1.0" # Or your actual Kotlin version
+
+# --- Downgraded versions for SDK 34 Compatibility ---
+composeBom = "2024.05.00" # Using stable BOM compatible with SDK 34
+activity = "1.9.0"        # Using stable Activity version compatible with SDK 34
+activityCompose = "1.9.0" # Aligning Activity Compose version
+
+# --- Other Dependency Versions (User Provided - Verify if needed) ---
+androidxCoreKtx = "1.12.0"
+androidxJunit = "1.1.5"
+appcompatVersion = "1.6.1"
+# composeBomVersion = "2024.02.00" # REMOVED - Redundant/Old
+constraintlayoutVersion = "2.1.4"
+espressoCoreVersion = "3.5.1"
+# playCoreKtx = "1.8.1" # REMOVED - Conflicts with featureDeliveryKtx
 junit = "4.13.2"
-junitVersion = "1.2.1"
-espressoCore = "3.6.1"
-appcompat = "1.7.0"
-material = "1.12.0"
-featureDeliveryKtx = "2.1.0"
-coreKtxVersion = "1.10.3"
-runtimeAndroid = "1.7.8"
-navigationRuntimeAndroid = "2.9.0-alpha09"
-navigationFragmentKtx = "2.8.9"
-activity = "1.10.1"
-constraintlayout = "2.2.1"
+lifecycleRuntimeCompose = "2.8.7" # Check if compatible with downgraded Compose BOM
+lifecycleRuntimeKtx = "2.8.7"
+lifecycleViewmodelCompose = "2.8.7" # Check if compatible with downgraded Compose BOM
+featureDeliveryKtx = "2.1.0" # Keep this for Play Feature Delivery
+materialVersion = "1.11.0" # Check if compatible with SDK 34
+navigationCompose = "2.8.9" # Check if compatible with downgraded Compose BOM
+navigationFragmentKtxVersion = "2.7.7"
+navigationUiKtx = "2.8.9" # Check if compatible with downgraded Compose BOM
+
 
 [libraries]
-androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
-gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
-feature-delivery-ktx = { group = "com.google.android.play", name = "feature-delivery-ktx", version.ref = "featureDeliveryKtx" }
-core-ktx = { group = "com.google.android.play", name = "core-ktx", version.ref = "coreKtxVersion" }
-androidx-runtime-android = { group = "androidx.compose.runtime", name = "runtime-android", version.ref = "runtimeAndroid" }
-androidx-navigation-runtime-android = { group = "androidx.navigation", name = "navigation-runtime-android", version.ref = "navigationRuntimeAndroid" }
-androidx-navigation-fragment-ktx = { group = "androidx.navigation", name = "navigation-fragment-ktx", version.ref = "navigationFragmentKtx" }
+# --- Compose Bill of Materials (Manages Compose library versions) ---
+androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+# androidx-compose-bom-v20240200 = { module = "androidx.compose:compose-bom", version.ref = "composeBomVersion" } # REMOVED - Redundant/Old
+
+# --- Compose Libraries (Versions managed by BOM unless overridden) ---
+androidx-animation = { module = "androidx.compose.animation:animation" }
+androidx-animation-graphics = { module = "androidx.compose.animation:animation-graphics" }
+androidx-foundation = { module = "androidx.compose.foundation:foundation" }
+androidx-foundation-layout = { module = "androidx.compose.foundation:foundation-layout" }
+androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
+androidx-material3 = { module = "androidx.compose.material3:material3" }
+androidx-runtime = { module = "androidx.compose.runtime:runtime" }
+androidx-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata" }
+androidx-ui = { module = "androidx.compose.ui:ui" }
+androidx-ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
+androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+
+# --- Activity Libraries ---
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
-androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+
+# --- Navigation Libraries ---
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+androidx-navigation-fragment-ktx-v277 = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigationFragmentKtxVersion" }
+androidx-navigation-ui-ktx = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "navigationUiKtx" }
+
+# --- Lifecycle Libraries ---
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
+
+# --- Google Play Libraries ---
+feature-delivery-ktx = { group = "com.google.android.play", name = "feature-delivery-ktx", version.ref = "featureDeliveryKtx" }
+# core-ktx = { group = "com.google.android.play", name = "core-ktx", version.ref = "playCoreKtx" } # REMOVED - Conflicts with feature-delivery-ktx
+
+# --- Other AndroidX & Material Libraries ---
+androidx-appcompat-v161 = { module = "androidx.appcompat:appcompat", version.ref = "appcompatVersion" }
+androidx-constraintlayout-v214 = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayoutVersion" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCoreKtx" }
+material-v1110 = { module = "com.google.android.material:material", version.ref = "materialVersion" }
+
+# --- Testing Libraries ---
+androidx-espresso-core-v351 = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCoreVersion" }
+androidx-junit-v115 = { module = "androidx.test.ext:junit", version.ref = "androidxJunit" }
+androidx-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" } # Version managed by BOM
+androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" } # Version managed by BOM
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+jetbrains-kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 

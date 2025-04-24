@@ -29,3 +29,110 @@ Headless Component Install Compose function ---> state store --->
 
 ----- Additional  Notes ----------
  Deep link with data , native navigation with data
+
+
+What is MVI?
+MVI is an architectural pattern that organizes an application into three core components:
+
+Model: Represents the application’s state, serving as the single source of truth for what the user interface (UI) should display.
+View: The UI layer that renders the state and captures user interactions (called intents).
+Intent: User actions or events (e.g., button clicks) that trigger changes to the state.
+In MVI, data flows in one direction:
+
+The View sends intents to the ViewModel.
+The ViewModel processes these intents and updates the state.
+The View observes the updated state and re-renders the UI.
+This unidirectional flow makes the application predictable, testable, and easier to maintain.
+
+The Role of the State Store
+The state store is a centralized component that holds the application’s state. It acts as the single source of truth for all state data, ensuring consistency across the app. Here’s what it does:
+
+Centralized State Management: It stores raw state data, such as user preferences, network statuses, or feature installation progress.
+Persistence: It can save state across app restarts using tools like databases or SharedPreferences.
+Reactive Updates: It often uses reactive streams (e.g., StateFlow in Kotlin or LiveData) to notify observers (like the ViewModel) when the state changes.
+For example, imagine an app managing dynamic feature installations. The state store might track whether a feature is "Not Installed," "Installing," or "Installed," providing a reliable, app-wide state reference.
+
+
+The Role of the ViewModel
+The ViewModel serves as a bridge between the View and the state store. It processes intents, interacts with the state store, and prepares state data specifically for the UI. Here’s its purpose:
+
+UI-Specific State: It transforms raw state from the state store into a format the View can easily use, such as combining data or filtering it for a specific screen.
+Business Logic: It handles the logic for processing intents, like validating user input or initiating actions (e.g., starting a feature installation).
+Lifecycle Awareness: In frameworks like Android, the ViewModel survives configuration changes (e.g., screen rotations), ensuring state consistency without burdening the View.
+For instance, in the feature installation example, the ViewModel might take the state store’s "Installing" status and combine it with a loading indicator for the UI.
+
+How the State Store and ViewModel Work Together
+The state store and ViewModel collaborate to manage state and update the UI in a structured way. Here’s how they interact:
+
+Initial Setup: The ViewModel observes the state store to get the latest state data (e.g., a feature’s installation status).
+Intent Processing: When the View sends an intent (e.g., "Load Feature"):
+The ViewModel checks the state store’s current state.
+It performs actions based on that state (e.g., starts an installation if the feature isn’t installed).
+It updates its own UI state (e.g., sets it to "Loading").
+State Changes: As the state store updates (e.g., the feature’s status changes to "Installed"), the ViewModel reacts and adjusts its UI state (e.g., to "Success").
+UI Rendering: The View observes the ViewModel’s state and updates the UI accordingly (e.g., shows the installed feature).
+This ensures a clear flow: Intent → ViewModel → State Store → ViewModel → View.
+
+
+
+--- Service Loader -------
+
+Your framework, part of the core dependencies, allows dynamic feature modules to register themselves after installation. You want to use the service locator pattern to load these modules and access their services, with DFComponentConfig defining configurations, including a list of interceptors. These interceptors can perform various tasks, such as initializing the service locator, logging analytics, or enforcing login requirements. The solution involves:
+
+A Global Service Locator: A centralized mechanism in the core app to register and retrieve services provided by dynamic features.
+Feature Registration: A way for dynamic features to register their components and services after installation, using a registrar pattern.
+Interceptors: Pre-install and post-install interceptors in DFComponentConfig to manage the feature lifecycle, with one interceptor initializing the service locator.
+Installation Workflow: A process to install features on-demand, run interceptors, and integrate with the service locator.
+
+To make this discoverable via ServiceLoader, add a file in the :plants module:
+
+File: src/main/resources/META-INF/services/com.kuru.featureflow.component.register.FeatureRegistrar
+Content: com.kuru.plants.PlantsFeatureRegistrar
+
+Step 4: Implement Feature Module Registration
+Each dynamic feature module implements FeatureRegistrar. For example, in the :plants module:
+
+----- Interceptors  ----------
+
+Step 3: Configure Dynamic Features with Interceptors
+The DFComponentConfig data class already supports a list of DFComponentInterceptor objects, where each interceptor has a preInstall flag and a task: () -> Boolean. Use this to define pre-install checks (e.g., network availability) and post-install tasks (e.g., service locator initialization).
+
+Here’s how a feature’s configuration might look in the core app:
+
+kotlin
+
+Copy
+package com.kuru.featureflow.component.register
+
+val plantsConfig = DFComponentConfig(
+    route = "plants",
+    listOfDFComponentInterceptor = listOf(
+        // Pre-install interceptor: Check network
+        DFComponentInterceptor(preInstall = true) {
+            val isNetworkAvailable = checkNetworkConnectivity() // Hypothetical function
+            if (!isNetworkAvailable) println("No network for plants feature")
+            isNetworkAvailable
+        },
+        // Post-install interceptor: Initialize service locator
+        DFComponentInterceptor(preInstall = false) {
+            try {
+                val registrar = findRegistrarForRoute("plants")
+                registrar?.initialize()
+                true
+            } catch (e: Exception) {
+                println("Failed to initialize plants feature: $e")
+                false
+            }
+        }
+    )
+)
+
+fun findRegistrarForRoute(route: String): FeatureRegistrar? {
+    return ServiceLoader.load(FeatureRegistrar::class.java)
+        .find { it.getDefinition().route == route }
+}
+Pre-Install Interceptors: Run before installation to validate conditions.
+Post-Install Interceptors: Run after installation to trigger feature initialization.
+
+
+

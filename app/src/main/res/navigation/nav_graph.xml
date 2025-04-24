@@ -1,33 +1,12 @@
-    xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto">
-        <navigation
-            android:id="@+id/nav_graph"
-            app:startDestination="@id/homeFragment">
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/dfComponentActivity">
 
-            <!-- Default starting destination for the dynamic feature -->
-            <fragment
-                android:id="@+id/homeFragment"
-                android:label="Home"
-                android:name="com.kuru.featureflow.component.ui.HomeFragment">
-                <deepLink
-                    android:id="@+id/homeDeepLink"
-                    app:uri="featureflow://chase/df/route/home" />
-            </fragment>
+    <activity
+        android:id="@+id/dfComponentActivity"
+        android:name="com.kuru.featureflow.component.ui.DFComponentActivity"
+        android:label="FeatureFlow" />
 
-            <!-- Example dynamic feature destination -->
-            <fragment
-                android:id="@+id/featureFragment"
-                android:label="Feature"
-                android:name="com.kuru.featureflow.component.ui.FeatureFragment">
-                <deepLink
-                    android:id="@+id/featureDeepLink"
-                    app:uri="featureflow://chase/df/route/feature/{id}" />
-                <argument
-                    android:name="id"
-                    app:argType="string"
-                    app:nullable="true" />
-            </fragment>
-
-            <!-- Add more destinations as needed for other dynamic features -->
-        </navigation>
-    </>
+</navigation>
