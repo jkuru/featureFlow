@@ -8,7 +8,7 @@ import javax.inject.Singleton
 
 @Singleton
 class DFComponentRegistryManager @Inject constructor(
-    private val componentRegistry: MutableMap<DFComponentConfig, @Composable (NavController) -> Unit>,
+    private val registryData: ComponentRegistryData,
     private val services: MutableMap<Class<*>, Any>
 ) : DFComponentRegistry {
 
@@ -17,16 +17,16 @@ class DFComponentRegistryManager @Inject constructor(
     }
 
     override fun register(dfComponentConfig: DFComponentConfig, screen: @Composable (NavController) -> Unit) {
-        componentRegistry[dfComponentConfig] = screen
+        registryData.put(dfComponentConfig, screen)
         Log.d(TAG, "Registered screen for route: ${dfComponentConfig.route}")
     }
 
     override fun getScreen(dfComponentConfig: DFComponentConfig): (@Composable (NavController) -> Unit)? {
-        return componentRegistry[dfComponentConfig]
+        return registryData.get(dfComponentConfig)
     }
 
     override fun unregister(dfComponentConfig: DFComponentConfig): Boolean {
-        val removed = componentRegistry.remove(dfComponentConfig) != null
+        val removed = registryData.remove(dfComponentConfig)
         if (removed) {
             Log.d(TAG, "Unregistered screen for route: ${dfComponentConfig.route}")
         }
@@ -34,10 +34,10 @@ class DFComponentRegistryManager @Inject constructor(
     }
 
     override fun isRegistrationValid(dfComponentConfig: DFComponentConfig): Boolean {
-        return componentRegistry.containsKey(dfComponentConfig)
+        return registryData.contains(dfComponentConfig)
     }
 
     override fun getConfig(route: String): DFComponentConfig? {
-        return componentRegistry.keys.find { it.route == route }
+        return registryData.getConfigByRoute(route)
     }
 }

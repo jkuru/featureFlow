@@ -2,16 +2,14 @@
 package com.kuru.featureflow.di
 
 import android.content.Context
-import androidx.compose.runtime.Composable
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import androidx.navigation.NavController
 import com.google.android.play.core.splitinstall.SplitInstallManager
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import com.kuru.featureflow.component.googleplay.DFComponentInstaller
 import com.kuru.featureflow.component.googleplay.DFComponentInstallerManager
-import com.kuru.featureflow.component.register.DFComponentConfig
+import com.kuru.featureflow.component.register.ComponentRegistryData
 import com.kuru.featureflow.component.register.DFComponentRegistry
 import com.kuru.featureflow.component.register.DFComponentRegistryManager
 import com.kuru.featureflow.component.state.DFComponentStateStore
@@ -36,9 +34,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    @Suppress("UNCHECKED_CAST")
-    fun provideComponentRegistryData(): MutableMap<DFComponentConfig, @Composable (NavController) -> Unit> {
-        return mutableMapOf()
+    fun provideComponentRegistryData(): ComponentRegistryData {
+        return ComponentRegistryData()
     }
 
     @Provides

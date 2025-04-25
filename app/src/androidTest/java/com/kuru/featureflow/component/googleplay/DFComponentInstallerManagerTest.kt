@@ -17,15 +17,10 @@ import com.kuru.featureflow.component.state.DFInstallProgress
 import com.kuru.featureflow.component.state.InstallationState
 import com.kuru.featureflow.di.AppModule
 import com.kuru.featureflow.di.FrameworkBindingsModule
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
-import dagger.hilt.components.SingletonComponent
-import dagger.hilt.testing.TestInstallIn
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
@@ -50,7 +45,6 @@ import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
 import org.robolectric.annotation.Config
 import javax.inject.Inject
-import javax.inject.Singleton
 
 @RunWith(AndroidJUnit4::class)
 @Config(application = HiltTestApplication::class) // Added for Robolectric compatibility
@@ -301,25 +295,4 @@ class DFComponentInstallerManagerTest {
         return mockState
     }
 
-    @Module
-    // **FIX 1:** Use TestInstallIn and specify modules to replace
-    @TestInstallIn(
-        components = [SingletonComponent::class],
-        // List the actual production modules that provide bindings TestModule overrides
-        replaces = [AppModule::class, FrameworkBindingsModule::class]
-    )
-    object TestModule {
-        @Provides
-        @Singleton
-        fun provideSplitInstallManager(): SplitInstallManager {
-            // Return mock directly is fine here, setup done in @Before or per-test
-            return Mockito.mock(SplitInstallManager::class.java)
-        }
-
-        @Provides
-        @Singleton
-        fun provideContext(@ApplicationContext context: Context): Context {
-            return context
-        }
-    }
 }
