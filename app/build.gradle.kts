@@ -1,8 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    alias(libs.plugins.jetbrains.kotlin.compose) // <-- Use the alias now
-    // ... other module plugins
+    alias(libs.plugins.jetbrains.kotlin.compose)
+    alias(libs.plugins.kapt)
+    alias(libs.plugins.hilt.android)
 }
 
 android {
@@ -16,7 +17,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.kuru.featureflow.CustomHiltTestRunner"
     }
 
     buildTypes {
@@ -33,7 +34,6 @@ android {
         compose = true
     }
 
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -42,17 +42,35 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
+    // Hilt
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
+
+    // Hilt Testing
+    androidTestImplementation(libs.hilt.android.testing)
+    kaptAndroidTest(libs.hilt.compiler)
+
+    // DataStore
+    implementation(libs.androidx.datastore.preferences)
+
     // Core Android dependencies
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat.v161)
-    implementation(libs.material.v1110)
-    implementation(libs.androidx.constraintlayout.v214)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.constraintlayout)
 
     // Compose dependencies
-    implementation(platform(libs.androidx.compose.bom)) // BOM for main source set
+    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
@@ -66,7 +84,7 @@ dependencies {
     implementation(libs.androidx.foundation.layout)
 
     // Navigation
-    implementation(libs.androidx.navigation.fragment.ktx.v277)
+    implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.navigation.compose)
 
@@ -77,20 +95,31 @@ dependencies {
 
     // Activity Compose
     implementation(libs.androidx.activity.compose)
-    implementation(libs.feature.delivery.ktx) // Ensure this alias matches your TOML file
 
-    // Testing dependencies
+    // Play Feature Delivery
+    implementation(libs.feature.delivery.ktx)
+    implementation(libs.kotlinx.coroutines.play.services)
+
+    // Testing dependencies (Unit Tests)
     testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit.v115)
-    androidTestImplementation(libs.androidx.espresso.core.v351)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.kotlinx.coroutines.test)
 
-    // --- Apply BOM for Android Test dependencies ---
-    androidTestImplementation(platform(libs.androidx.compose.bom)) // <-- ADD THIS LINE
-
-    // --- Compose Test dependencies (versions now managed by BOM) ---
+    // Testing dependencies (Instrumentation Tests)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(libs.mockito.core)
+    androidTestImplementation(libs.mockito.kotlin)
+    androidTestImplementation(libs.robolectric)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
 
-    // --- Debug dependencies (versions managed by BOM) ---
+    // Debug dependencies
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }

@@ -1,54 +1,134 @@
 package com.kuru.featureflow.component.state
 
-import android.content.SharedPreferences
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import java.io.IOException
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class DFComponentStateStoreImpl(
-    private val scope: CoroutineScope,
-    private val prefs: SharedPreferences?
+// Define DataStore instance via extension property
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "featureflow_settings")
+
+@Singleton // Make the state store a singleton via Hilt
+class DFComponentStateStoreImpl @Inject constructor(
+    @ApplicationContext private val context: Context,
+    // Inject a CoroutineScope for managing internal state flows if needed outside ViewModelScope
+    // For simplicity, using a default scope here. Consider providing one via Hilt.
+    private val externalScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) // Use Main.immediate for synchronous-like updates
 ) : DFComponentStateStore {
+
+    // --- Preference Keys ---
+    private object PreferencesKeys {
+        val LAST_ATTEMPTED_FEATURE_URI = stringPreferencesKey("last_attempted_feature_uri")
+        // Add keys here if you decide to persist installation/interceptor states
+        // Example: fun installationStateKey(feature: String) = stringPreferencesKey("install_state_$feature")
+    }
+
+    // --- In-Memory State Flows ---
+    // Holds the current installation state for each feature observed or set
     private val _installationStates = MutableStateFlow<Map<String, InstallationState>>(emptyMap())
-    private val _interceptorStates = MutableStateFlow<Map<String, InterceptorState>>(emptyMap())
+    // Holds interceptor states (kept in-memory)
+    private val _DF_interceptorStates = MutableStateFlow<Map<String, DFInterceptorState>>(emptyMap())
 
-    override fun getLastAttemptedFeature(): String? {
-        return prefs?.getString(LAST_ATTEMPTED_FEATURE_INSTALL, null)
+
+    // --- Persistence Methods (Using DataStore) ---
+
+    override suspend fun getLastAttemptedFeature(): String? {
+        return readPreference(PreferencesKeys.LAST_ATTEMPTED_FEATURE_URI)
     }
 
-    override fun setLastAttemptedFeature(uri: String) {
-        prefs?.edit()?.putString(LAST_ATTEMPTED_FEATURE_INSTALL, uri)?.apply()
+    override suspend fun setLastAttemptedFeature(uri: String) {
+        updatePreference(PreferencesKeys.LAST_ATTEMPTED_FEATURE_URI, uri)
     }
 
+    // --- In-Memory State Methods ---
+
+    // Provides the current snapshot of the installation state
     override fun getInstallationState(feature: String): InstallationState {
         return _installationStates.value[feature] ?: InstallationState.NotInstalled
     }
 
+    // Updates the in-memory state map and notifies observers
     override fun setInstallationState(feature: String, state: InstallationState) {
-        val currentStates = _installationStates.value.toMutableMap()
-        currentStates[feature] = state
-        _installationStates.value = currentStates
+        // Update synchronously on the main thread if called from there, or use scope.launch
+        // Using externalScope ensures updates happen even if ViewModel scope is cancelled
+        externalScope.launch {
+            _installationStates.value = _installationStates.value.toMutableMap().apply {
+                this[feature] = state
+            }
+        }
     }
 
-    override fun getInterceptorState(interceptorId: String): InterceptorState {
-        return _interceptorStates.value[interceptorId] ?: InterceptorState.Inactive
-    }
-
-    override fun setInterceptorState(interceptorId: String, state: InterceptorState) {
-        val currentStates = _interceptorStates.value.toMutableMap()
-        currentStates[interceptorId] = state
-        _interceptorStates.value = currentStates
-    }
-
+    // Provides a flow that emits updates for a specific feature's installation state
     override fun getInstallationStateFlow(feature: String): StateFlow<InstallationState> {
-        return _installationStates.map { it[feature] ?: InstallationState.NotInstalled }
-            .stateIn(scope, SharingStarted.Lazily, InstallationState.NotInstalled)
+        return _installationStates
+            .map { stateMap -> stateMap[feature] ?: InstallationState.NotInstalled }
+            .distinctUntilChanged() // Only emit when the state for this feature actually changes
+            .stateIn(
+                scope = externalScope, // Use the injected scope
+                started = SharingStarted.WhileSubscribed(5000), // Keep active for 5s after last subscriber
+                initialValue = getInstallationState(feature) // Start with the current known state
+            )
     }
 
-    companion object {
-        const val LAST_ATTEMPTED_FEATURE_INSTALL = "last_attempted_feature_install"
+
+    // Interceptor state methods (remain in-memory)
+    override fun getInterceptorState(interceptorId: String): DFInterceptorState {
+        return _DF_interceptorStates.value[interceptorId] ?: DFInterceptorState.Inactive
+    }
+
+    override fun setInterceptorState(interceptorId: String, state: DFInterceptorState) {
+        externalScope.launch {
+            _DF_interceptorStates.value = _DF_interceptorStates.value.toMutableMap().apply {
+                this[interceptorId] = state
+            }
+        }
+    }
+
+
+    // --- DataStore Helper Functions ---
+    private suspend fun <T> readPreference(key: Preferences.Key<T>): T? {
+        return try {
+            val preferences = context.dataStore.data
+                .catch { exception ->
+                    if (exception is IOException) {
+                        emit(emptyPreferences()) // Handle error reading preferences
+                    } else {
+                        throw exception
+                    }
+                }.first() // Get the first/current value
+            preferences[key]
+        } catch (e: Exception) {
+            // Handle exceptions during read
+            null
+        }
+    }
+
+    private suspend fun <T> updatePreference(key: Preferences.Key<T>, value: T) {
+        try {
+            context.dataStore.edit { preferences ->
+                preferences[key] = value
+            }
+        } catch (e: Exception) {
+            // Handle exceptions during write
+        }
     }
 }

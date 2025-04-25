@@ -2,20 +2,19 @@ package com.kuru.featureflow.component.state
 
 import kotlinx.coroutines.flow.StateFlow
 
-/**
- * Role of DFComponentStateStore
- * The DFComponentStateStore is designed as the single source of truth for the raw, application-wide state of features. Here’s what it does:
- *
- * Centralized State Management: It holds the installation states (InstallationState) and interceptor states (InterceptorState) for all features, accessible across the app.
- * Persistence: It uses SharedPreferences to store data like the last attempted URI, ensuring durability across app restarts.
- * Raw Data: It provides states like NotInstalled, Installing, Installed, or Failed, which reflect the actual status of feature installations.
- */
+// Interface remains the same for now, but could be updated
+// if we want Flow-based getters for non-installation states too.
 interface DFComponentStateStore {
-    fun getLastAttemptedFeature(): String?
-    fun setLastAttemptedFeature(uri: String)
-    fun getInstallationState(feature: String): InstallationState
-    fun setInstallationState(feature: String, state: InstallationState)
-    fun getInterceptorState(interceptorId: String): InterceptorState
-    fun setInterceptorState(interceptorId: String, state: InterceptorState)
-    fun getInstallationStateFlow(feature: String): StateFlow<InstallationState>
+    // --- Persistence ---
+    suspend fun getLastAttemptedFeature(): String?
+    suspend fun setLastAttemptedFeature(uri: String)
+
+    // --- In-Memory State Management (Could also be persisted if needed) ---
+    fun getInstallationState(feature: String): InstallationState // Immediate value
+    fun setInstallationState(feature: String, state: InstallationState) // Update in-memory
+    fun getInstallationStateFlow(feature: String): StateFlow<InstallationState> // Observe in-memory
+
+    // Interceptor states (kept in-memory for this example)
+    fun getInterceptorState(interceptorId: String): DFInterceptorState
+    fun setInterceptorState(interceptorId: String, state: DFInterceptorState)
 }

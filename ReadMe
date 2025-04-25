@@ -134,5 +134,128 @@ fun findRegistrarForRoute(route: String): FeatureRegistrar? {
 Pre-Install Interceptors: Run before installation to validate conditions.
 Post-Install Interceptors: Run after installation to trigger feature initialization.
 
+----------
 
 
+/**
+     * How It Works
+     * 1) Defining the Service Provider Interface (SPI)
+     *   The framework defines an interface, say DFComponentEntry, which acts as the contract that all dynamic feature modules must implement.
+     *   This is the "entry point" interface that the framework expects.
+     * 2) Dynamic Feature Module Implementation
+     *    Each dynamic feature module provides its own implementation of DFComponentEntry.
+     *    For example, a "plants" module might have a class called PlantEntry that implements DFComponentEntry.
+     * 3) Service Configuration with META-INF
+     *     Each dynamic feature module includes a special configuration file located at:
+     *     META-INF/services/com.kuru.featureflow.component.register.DFComponentEntry
+     *     The file’s name is the fully qualified name of the SPI interface (DFComponentEntry in this case).
+     *     Inside this file, the module lists the fully qualified name of its implementation class, e.g.:
+     *     com.kuru.featureflow.plant.PlantEntry
+     *  This file acts as a bridge, telling the ServiceLoader which class to load for the given interface.
+     *  4) Loading with ServiceLoader
+     *      When the framework executes:
+     *     val serviceLoader = ServiceLoader.load(DFComponentEntry::class.java, context.classLoader)
+     *     The ServiceLoader scans the entire classpath (via the provided context.classLoader) for all files
+     *     named META-INF/services/com.kuru.featureflow.component.register.DFComponentEntry.
+     *     It reads the class names listed in these files (e.g., com.kuru.featureflow.plant.PlantEntry).
+     *     Using reflection, it instantiates these classes, creating instances of the DFComponentEntry implementations.
+     *  5) Dynamic Feature Modules and Classpath
+     *     When a dynamic feature module is installed (e.g., via Play Feature Delivery or another mechanism),
+     *     its classes and resources—including the META-INF/services/ directory—become part of the application’s classpath.
+     *     The context.classLoader ensures that the ServiceLoader can access this updated classpath, allowing it to find
+     *     and load the entry point classes from the newly installed modules.
+     *  6) Initializing the Modules
+     *     After loading, the framework can iterate over the ServiceLoader and call methods on the loaded implementations, like:
+     *     serviceLoader.forEach { entry -> entry.initialize() }
+     *     This allows each module to register itself or perform any necessary setup with the framework.
+     *
+     *     What’s Happening in Point 3?
+     * Point 3 refers to setting up a configuration file in the "plants" dynamic feature module that tells the ServiceLoader where to find the PlantEntry class. This file lives in a specific directory (META-INF/services/) and follows a standard Java convention for service discovery. Let’s dive into how this works.
+     *
+     * The Setup: Interface and Implementation
+     * First, let’s establish the pieces involved:
+     *
+     * The Interface (SPI - Service Provider Interface)
+     * You have an interface defined in your framework:
+     * kotlin
+     *
+     * Copy
+     * package com.kuru.featureflow.component.register
+     *
+     * interface DFComponentEntry {
+     *     fun initialize()
+     * }
+     * This is the contract that all dynamic feature modules must follow.
+     * The Implementation in the "plants" Module
+     * In your "plants" module, you’ve created a class that implements this interface:
+     * kotlin
+     *
+     * Copy
+     * package com.kuru.featureflow.plant
+     *
+     * object PlantEntry : DFComponentEntry {
+     *     override fun initialize() {
+     *         // Initialization logic for the plants module
+     *     }
+     * }
+     * PlantEntry is the entry point for the "plants" module, but the framework doesn’t know about it yet. We need a way to connect the two.
+     * The Role of META-INF/services/
+     * To bridge the gap between the interface (DFComponentEntry) and its implementation (PlantEntry), you use a configuration file in the META-INF/services/ directory. Here’s how you set it up:
+     *
+     * Directory and File Creation
+     * Inside the "plants" module, you create the following structure:
+     * text
+     *
+     * Copy
+     * plants-module/
+     * ├── src/
+     * │   └── com/kuru/featureflow/plant/
+     * │       └── PlantEntry.kt
+     * ├── META-INF/
+     * │   └── services/
+     * │       └── com.kuru.featureflow.component.register.DFComponentEntry
+     * The file is named exactly after the fully qualified name of the interface: com.kuru.featureflow.component.register.DFComponentEntry.
+     * This naming convention is critical—it’s how ServiceLoader knows which interface this file corresponds to.
+     * File Contents
+     * Inside the com.kuru.featureflow.component.register.DFComponentEntry file, you write one line:
+     * text
+     *
+     * Copy
+     * com.kuru.featureflow.plant.PlantEntry
+     * This is the fully qualified name of the implementation class (PlantEntry).
+     * The file acts like a pointer, saying: “Hey, if you’re looking for implementations of DFComponentEntry, here’s one: PlantEntry.”
+     * How ServiceLoader Uses This to Find PlantEntry
+     * Now, let’s connect this to the ServiceLoader. In your framework, you likely have code like this:
+     *
+     * kotlin
+     *
+     * Copy
+     * val serviceLoader = ServiceLoader.load(DFComponentEntry::class.java, context.classLoader)
+     * Here’s what happens when this line runs:
+     *
+     * Scanning the Classpath
+     * The ServiceLoader searches the entire classpath (which includes the "plants" module once it’s installed) for any files located at META-INF/services/com.kuru.featureflow.component.register.DFComponentEntry.
+     * The context.classLoader ensures it can see all loaded modules, including dynamic ones like "plants."
+     * Reading the File
+     * When it finds the file META-INF/services/com.kuru.featureflow.component.register.DFComponentEntry in the "plants" module, it opens it and reads the contents: com.kuru.featureflow.plant.PlantEntry.
+     * Loading the Class
+     * Using reflection, the ServiceLoader loads the PlantEntry class based on the name it found (com.kuru.featureflow.plant.PlantEntry).
+     * Since PlantEntry is a Kotlin object (a singleton), it retrieves the instance of PlantEntry.
+     * If it were a regular class, it would create a new instance (assuming it has a no-arg constructor).
+     * Providing the Instance
+     * The ServiceLoader then makes PlantEntry available to your code as an implementation of DFComponentEntry. You can iterate over all found implementations like this:
+     * kotlin
+     *
+     * Copy
+     * serviceLoader.forEach { entry ->
+     *     entry.initialize() // Calls PlantEntry.initialize()
+     * }
+     */
+
+Here’s the sequence breakdown:
+
+Application Running: Your base application module is already running. It has access to its own ApplicationContext.
+Module Installed: The dynamic feature module ("plants") gets downloaded and installed. Its classes, including PlantEntry and the META-INF/services/ file, are now part of the application's classpath.
+ServiceLoader Called (in Base Module): Your framework code, likely running in the base module (e.g., inside DFComponentViewModel.runServiceLoaderInitialization), calls ServiceLoader.load(). Crucially, the Context passed to ServiceLoader.load(..., context.classLoader) is typically the readily available ApplicationContext from the base module.
+Instance Created (by ServiceLoader): ServiceLoader scans the classpath (using the provided classloader which now includes the dynamic module), finds the META-INF/services/ file, reads the class name (com.kuru.featureflow.plant.PlantEntry), and uses reflection to load and instantiate PlantEntry. At this point, the PlantEntry object exists.
+initialize() Called (in Base Module): The framework code then iterates through the instances provided by ServiceLoader and calls entry.initialize().

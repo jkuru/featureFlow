@@ -1,41 +1,43 @@
 package com.kuru.featureflow.component.register
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class DFComponentRegistryManager(
+@Singleton
+class DFComponentRegistryManager @Inject constructor(
     private val componentRegistry: MutableMap<DFComponentConfig, @Composable (NavController) -> Unit>,
     private val services: MutableMap<Class<*>, Any>
 ) : DFComponentRegistry {
-    override fun register(dfComponentConfig: DFComponentConfig, screen: @Composable (NavController) -> Unit) {
-        componentRegistry[dfComponentConfig] = screen
+
+    companion object {
+        private const val TAG = "DFRegistryManager"
     }
 
-    override fun getScreen(dfComponentConfig: DFComponentConfig): (@Composable (NavController) -> Unit)? =
-        componentRegistry[dfComponentConfig]
+    override fun register(dfComponentConfig: DFComponentConfig, screen: @Composable (NavController) -> Unit) {
+        componentRegistry[dfComponentConfig] = screen
+        Log.d(TAG, "Registered screen for route: ${dfComponentConfig.route}")
+    }
+
+    override fun getScreen(dfComponentConfig: DFComponentConfig): (@Composable (NavController) -> Unit)? {
+        return componentRegistry[dfComponentConfig]
+    }
 
     override fun unregister(dfComponentConfig: DFComponentConfig): Boolean {
-        componentRegistry.remove(dfComponentConfig)
-        return !componentRegistry.contains(dfComponentConfig)
+        val removed = componentRegistry.remove(dfComponentConfig) != null
+        if (removed) {
+            Log.d(TAG, "Unregistered screen for route: ${dfComponentConfig.route}")
+        }
+        return removed
     }
 
     override fun isRegistrationValid(dfComponentConfig: DFComponentConfig): Boolean {
-        return componentRegistry.contains(dfComponentConfig)
-    }
-
-    override fun <T : Any> registerService(serviceClass: Class<T>, instance: T) {
-        services[serviceClass] = instance
-    }
-
-    override fun <T : Any> getService(serviceClass: Class<T>): T? {
-        return services[serviceClass] as T?
+        return componentRegistry.containsKey(dfComponentConfig)
     }
 
     override fun getConfig(route: String): DFComponentConfig? {
         return componentRegistry.keys.find { it.route == route }
-    }
-
-    companion object {
-        private const val TAG = "DynamicFeatureManager"
     }
 }
