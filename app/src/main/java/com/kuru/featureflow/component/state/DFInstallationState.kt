@@ -6,36 +6,36 @@ import com.google.android.play.core.splitinstall.model.SplitInstallErrorCode
  * Represents the installation state of a dynamic feature module.
  * Includes progress and specific error codes.
  */
-sealed class InstallationState {
+sealed class DFInstallationState {
     /** Module is not installed. */
-    data object NotInstalled : InstallationState()
+    data object NotInstalled : DFInstallationState()
 
     /** Module installation is pending. */
-    data object Pending : InstallationState()
+    data object Pending : DFInstallationState()
 
     /** Module is currently downloading. */
-    data class Downloading(val progress: Int) : InstallationState() // Progress 0-100
+    data class Downloading(val progress: Int) : DFInstallationState() // Progress 0-100
 
     /** Module is currently installing after download. */
-    data class Installing(val progress: Int) : InstallationState() // Progress 0-100
+    data class Installing(val progress: Int) : DFInstallationState() // Progress 0-100
 
     /** Module is successfully installed. */
-    data object Installed : InstallationState()
+    data object Installed : DFInstallationState()
 
     /** Module installation failed. */
-    data class Failed(val errorCode: DFErrorCode) : InstallationState()
+    data class Failed(val errorCode: DFErrorCode) : DFInstallationState()
 
     /** User confirmation is required to continue installation (e.g., large download). */
-    data object RequiresConfirmation : InstallationState()
+    data object RequiresConfirmation : DFInstallationState()
 
     /** Installation is currently canceling. */
-    data object Canceling : InstallationState()
+    data object Canceling : DFInstallationState()
 
     /** Installation has been canceled. */
-    data object Canceled : InstallationState()
+    data object Canceled : DFInstallationState()
 
     /** Module is unknown (should not typically happen). */
-    data object Unknown : InstallationState()
+    data object Unknown : DFInstallationState()
 }
 
 /**

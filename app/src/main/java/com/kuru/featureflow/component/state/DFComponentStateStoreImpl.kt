@@ -44,7 +44,7 @@ class DFComponentStateStoreImpl @Inject constructor(
 
     // --- In-Memory State Flows ---
     // Holds the current installation state for each feature observed or set
-    private val _installationStates = MutableStateFlow<Map<String, InstallationState>>(emptyMap())
+    private val _DF_installationStates = MutableStateFlow<Map<String, DFInstallationState>>(emptyMap())
     // Holds interceptor states (kept in-memory)
     private val _DF_interceptorStates = MutableStateFlow<Map<String, DFInterceptorState>>(emptyMap())
 
@@ -62,25 +62,25 @@ class DFComponentStateStoreImpl @Inject constructor(
     // --- In-Memory State Methods ---
 
     // Provides the current snapshot of the installation state
-    override fun getInstallationState(feature: String): InstallationState {
-        return _installationStates.value[feature] ?: InstallationState.NotInstalled
+    override fun getInstallationState(feature: String): DFInstallationState {
+        return _DF_installationStates.value[feature] ?: DFInstallationState.NotInstalled
     }
 
     // Updates the in-memory state map and notifies observers
-    override fun setInstallationState(feature: String, state: InstallationState) {
+    override fun setInstallationState(feature: String, state: DFInstallationState) {
         // Update synchronously on the main thread if called from there, or use scope.launch
         // Using externalScope ensures updates happen even if ViewModel scope is cancelled
         externalScope.launch {
-            _installationStates.value = _installationStates.value.toMutableMap().apply {
+            _DF_installationStates.value = _DF_installationStates.value.toMutableMap().apply {
                 this[feature] = state
             }
         }
     }
 
     // Provides a flow that emits updates for a specific feature's installation state
-    override fun getInstallationStateFlow(feature: String): StateFlow<InstallationState> {
-        return _installationStates
-            .map { stateMap -> stateMap[feature] ?: InstallationState.NotInstalled }
+    override fun getInstallationStateFlow(feature: String): StateFlow<DFInstallationState> {
+        return _DF_installationStates
+            .map { stateMap -> stateMap[feature] ?: DFInstallationState.NotInstalled }
             .distinctUntilChanged() // Only emit when the state for this feature actually changes
             .stateIn(
                 scope = externalScope, // Use the injected scope

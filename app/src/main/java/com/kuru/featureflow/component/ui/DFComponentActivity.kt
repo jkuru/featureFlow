@@ -21,7 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import com.google.android.play.core.splitinstall.SplitInstallManager
 import com.google.android.play.core.splitinstall.SplitInstallSessionState // Import Play Core state class
 import com.kuru.featureflow.component.route.DFComponentUriRouteParser
-import com.kuru.featureflow.component.state.InstallationState // Keep import if used elsewhere
+import com.kuru.featureflow.component.state.DFInstallationState // Keep import if used elsewhere
 import com.kuru.featureflow.ui.theme.FeatureFlowTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -188,7 +188,7 @@ class DFComponentActivity : ComponentActivity() {
                         _featureAwaitingConfirmation = null
                     }
 
-                    if (uiState.installationState is InstallationState.Installed) {
+                    if (uiState.DFInstallationState is DFInstallationState.Installed) {
                         val featureName = uiState.feature
                         Log.d(TAG, "Feature $featureName reached Installed state.")
                         // TODO: Trigger navigation to the actual feature screen here.

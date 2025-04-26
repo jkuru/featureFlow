@@ -9,7 +9,7 @@ import com.google.android.play.core.splitinstall.SplitInstallStateUpdatedListene
 import com.google.android.play.core.splitinstall.model.SplitInstallSessionStatus
 import com.kuru.featureflow.component.state.DFErrorCode
 import com.kuru.featureflow.component.state.DFInstallProgress
-import com.kuru.featureflow.component.state.InstallationState
+import com.kuru.featureflow.component.state.DFInstallationState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -42,7 +42,7 @@ class DFComponentInstallerManager @Inject constructor(
         if (isComponentInstalled(componentName)) {
             Log.i(TAG, "Install requested for already installed component: $componentName")
             // Wrap the final state in InstallProgress
-            return flowOf(DFInstallProgress(InstallationState.Installed))
+            return flowOf(DFInstallProgress(DFInstallationState.Installed))
         }
 
         val request = SplitInstallRequest.newBuilder()
@@ -94,7 +94,7 @@ class DFComponentInstallerManager @Inject constructor(
                     val initialProgress = if (currentSessionState != null) {
                         mapSessionStateToInstallProgress(currentSessionState, componentName) // Use new helper
                     } else {
-                        DFInstallProgress(InstallationState.Pending) // Fallback initial state
+                        DFInstallProgress(DFInstallationState.Pending) // Fallback initial state
                     }
                     Log.d(TAG, "Emitting initial state for $componentName (Session $currentSessionId): ${initialProgress.frameworkState}")
                     trySend(initialProgress)
@@ -104,13 +104,13 @@ class DFComponentInstallerManager @Inject constructor(
                     if (currentSessionState != null) {
                         trySend(mapSessionStateToInstallProgress(currentSessionState, componentName)) // Use new helper
                     } else {
-                        trySend(DFInstallProgress(InstallationState.Unknown)) // Or Failed state
+                        trySend(DFInstallProgress(DFInstallationState.Unknown)) // Or Failed state
                     }
                 }
 
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to start install request or register listener for $componentName", e)
-                trySend(DFInstallProgress(InstallationState.Failed(DFErrorCode.UNKNOWN_ERROR))) // Wrap in InstallProgress
+                trySend(DFInstallProgress(DFInstallationState.Failed(DFErrorCode.UNKNOWN_ERROR))) // Wrap in InstallProgress
                 close(e)
             }
 
@@ -150,39 +150,39 @@ class DFComponentInstallerManager @Inject constructor(
             // Decide how to handle this - maybe return Unknown state?
         }
 
-        val frameworkState: InstallationState = when (state.status()) {
-            SplitInstallSessionStatus.PENDING -> InstallationState.Pending
-            SplitInstallSessionStatus.REQUIRES_USER_CONFIRMATION -> InstallationState.RequiresConfirmation // Mapped state
+        val frameworkState: DFInstallationState = when (state.status()) {
+            SplitInstallSessionStatus.PENDING -> DFInstallationState.Pending
+            SplitInstallSessionStatus.REQUIRES_USER_CONFIRMATION -> DFInstallationState.RequiresConfirmation // Mapped state
             SplitInstallSessionStatus.DOWNLOADING -> {
                 val totalBytes = state.totalBytesToDownload()
                 val progress = if (totalBytes > 0) {
                     ((state.bytesDownloaded() * 100) / totalBytes).toInt()
                 } else { 0 }
-                InstallationState.Downloading(progress.coerceIn(0, 100))
+                DFInstallationState.Downloading(progress.coerceIn(0, 100))
             }
-            SplitInstallSessionStatus.DOWNLOADED -> InstallationState.Installing(0)
-            SplitInstallSessionStatus.INSTALLING -> InstallationState.Installing(100)
-            SplitInstallSessionStatus.INSTALLED -> InstallationState.Installed
-            SplitInstallSessionStatus.FAILED -> InstallationState.Failed(DFErrorCode.fromSplitInstallErrorCode(state.errorCode()))
-            SplitInstallSessionStatus.CANCELING -> InstallationState.Canceling
-            SplitInstallSessionStatus.CANCELED -> InstallationState.Canceled
-            SplitInstallSessionStatus.UNKNOWN -> InstallationState.Unknown
-            else -> InstallationState.Unknown
+            SplitInstallSessionStatus.DOWNLOADED -> DFInstallationState.Installing(0)
+            SplitInstallSessionStatus.INSTALLING -> DFInstallationState.Installing(100)
+            SplitInstallSessionStatus.INSTALLED -> DFInstallationState.Installed
+            SplitInstallSessionStatus.FAILED -> DFInstallationState.Failed(DFErrorCode.fromSplitInstallErrorCode(state.errorCode()))
+            SplitInstallSessionStatus.CANCELING -> DFInstallationState.Canceling
+            SplitInstallSessionStatus.CANCELED -> DFInstallationState.Canceled
+            SplitInstallSessionStatus.UNKNOWN -> DFInstallationState.Unknown
+            else -> DFInstallationState.Unknown
         }
 
         // Create the InstallProgress object, including the raw state if confirmation is needed
         return DFInstallProgress(
             frameworkState = frameworkState,
-            playCoreState = if (frameworkState is InstallationState.RequiresConfirmation) state else null
+            playCoreState = if (frameworkState is DFInstallationState.RequiresConfirmation) state else null
         )
     }
 
 
-    private fun isTerminalState(state: InstallationState): Boolean {
+    private fun isTerminalState(state: DFInstallationState): Boolean {
         return when (state) {
-            is InstallationState.Installed,
-            is InstallationState.Failed,
-            is InstallationState.Canceled -> true
+            is DFInstallationState.Installed,
+            is DFInstallationState.Failed,
+            is DFInstallationState.Canceled -> true
             else -> false
         }
     }

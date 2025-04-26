@@ -7,6 +7,6 @@ import com.google.android.play.core.splitinstall.SplitInstallSessionState
  * primarily used to pass the SplitInstallSessionState when confirmation is required.
  */
 data class DFInstallProgress(
-    val frameworkState: InstallationState,
+    val frameworkState: DFInstallationState,
     val playCoreState: SplitInstallSessionState? = null // Nullable, only set when relevant (e.g., RequiresConfirmation)
 )

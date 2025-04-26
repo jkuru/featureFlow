@@ -114,10 +114,9 @@ dependencies {
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
-    androidTestImplementation(libs.mockito.core)
-    androidTestImplementation(libs.mockito.kotlin)
     androidTestImplementation(libs.robolectric)
-    androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.mockito.android) // Added for Android instrumentation tests
+    androidTestImplementation(libs.mockito.kotlin) // Keep for Kotlin extensions
 
     // Debug dependencies
     debugImplementation(libs.androidx.ui.tooling)

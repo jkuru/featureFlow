@@ -14,7 +14,7 @@ import com.google.android.play.core.splitinstall.SplitInstallStateUpdatedListene
 import com.google.android.play.core.splitinstall.model.SplitInstallSessionStatus
 import com.kuru.featureflow.component.state.DFErrorCode
 import com.kuru.featureflow.component.state.DFInstallProgress
-import com.kuru.featureflow.component.state.InstallationState
+import com.kuru.featureflow.component.state.DFInstallationState
 import com.kuru.featureflow.di.AppModule
 import com.kuru.featureflow.di.FrameworkBindingsModule
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -124,7 +124,7 @@ class DFComponentInstallerManagerTest {
         // Or keep using toList if multiple "Installed" emissions are possible (unlikely)
         val results = flow.toList()
         assertEquals(1, results.size)
-        assertEquals(InstallationState.Installed, results.first().frameworkState)
+        assertEquals(DFInstallationState.Installed, results.first().frameworkState)
 
         verify(splitInstallManager).installedModules
         verify(splitInstallManager, never()).startInstall(ArgumentMatchers.any(SplitInstallRequest::class.java))
@@ -176,11 +176,11 @@ class DFComponentInstallerManagerTest {
 
         // Assert against the collected states
         assertEquals(4, collectedStates.size) // PENDING, DOWNLOADING, INSTALLING, INSTALLED
-        assertEquals(InstallationState.Pending, collectedStates[0].frameworkState)
-        assertEquals(InstallationState.Downloading(50), collectedStates[1].frameworkState)
+        assertEquals(DFInstallationState.Pending, collectedStates[0].frameworkState)
+        assertEquals(DFInstallationState.Downloading(50), collectedStates[1].frameworkState)
         // **FIX 2:** Uncommented this assertion (assuming Installing state IS expected)
-        assertEquals(InstallationState.Installing(10), collectedStates[2].frameworkState)
-        assertEquals(InstallationState.Installed, collectedStates[3].frameworkState)
+        assertEquals(DFInstallationState.Installing(10), collectedStates[2].frameworkState)
+        assertEquals(DFInstallationState.Installed, collectedStates[3].frameworkState)
 
         job.cancel()
     }
@@ -221,9 +221,9 @@ class DFComponentInstallerManagerTest {
 
         // Assert against the collected states
         assertEquals(2, collectedStates.size) // PENDING, FAILED
-        assertEquals(InstallationState.Pending, collectedStates[0].frameworkState)
-        assertTrue(collectedStates[1].frameworkState is InstallationState.Failed)
-        assertEquals(DFErrorCode.NETWORK_ERROR, (collectedStates[1].frameworkState as InstallationState.Failed).errorCode)
+        assertEquals(DFInstallationState.Pending, collectedStates[0].frameworkState)
+        assertTrue(collectedStates[1].frameworkState is DFInstallationState.Failed)
+        assertEquals(DFErrorCode.NETWORK_ERROR, (collectedStates[1].frameworkState as DFInstallationState.Failed).errorCode)
 
         job.cancel()
     }
@@ -260,7 +260,7 @@ class DFComponentInstallerManagerTest {
 
         // Assert against the collected states
         assertTrue(collectedStates.isNotEmpty()) // Ensure something was emitted
-        assertEquals(InstallationState.Pending, collectedStates.first().frameworkState) // Check the first state
+        assertEquals(DFInstallationState.Pending, collectedStates.first().frameworkState) // Check the first state
 
         job.cancel()
     }

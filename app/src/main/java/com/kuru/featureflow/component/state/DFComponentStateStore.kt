@@ -10,9 +10,9 @@ interface DFComponentStateStore {
     suspend fun setLastAttemptedFeature(uri: String)
 
     // --- In-Memory State Management (Could also be persisted if needed) ---
-    fun getInstallationState(feature: String): InstallationState // Immediate value
-    fun setInstallationState(feature: String, state: InstallationState) // Update in-memory
-    fun getInstallationStateFlow(feature: String): StateFlow<InstallationState> // Observe in-memory
+    fun getInstallationState(feature: String): DFInstallationState // Immediate value
+    fun setInstallationState(feature: String, state: DFInstallationState) // Update in-memory
+    fun getInstallationStateFlow(feature: String): StateFlow<DFInstallationState> // Observe in-memory
 
     // Interceptor states (kept in-memory for this example)
     fun getInterceptorState(interceptorId: String): DFInterceptorState
