@@ -76,12 +76,12 @@ class DFComponentInstallerManagerTest {
     private val testModuleName = "testModule"
     private val testSessionId = 123
 
-    private lateinit var mocksClosable: AutoCloseable
+    private var mocksClosable: AutoCloseable =  MockitoAnnotations.openMocks(this)
 
     @Before
     fun setUp() {
-        mocksClosable = MockitoAnnotations.openMocks(this)
         hiltRule.inject()
+        mocksClosable = MockitoAnnotations.openMocks(this)
         // Setup default success task for startInstall IF it's always expected to succeed initially
         // Can be overridden in specific tests if needed
         val mockTask: Task<Int> = Tasks.forResult(testSessionId)
