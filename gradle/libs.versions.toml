@@ -1,7 +1,7 @@
 
 [versions]
-agp = "8.5.2"
-kotlin = "2.0.20"
+agp = "8.5.0" # Updated to latest stable AGP version
+kotlin = "2.0.20" # Updated to latest stable Kotlin version
 hilt = "2.51.1"
 composeBom = "2024.05.00"
 activity = "1.9.0"

@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.compose)
     alias(libs.plugins.kapt)
     alias(libs.plugins.hilt.android)
+    `maven-publish`
 }
 
 android {
@@ -11,11 +12,9 @@ android {
     compileSdk = 34
 
     defaultConfig {
-     //   applicationId = "com.kuru.featureflow"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+
 
         testInstrumentationRunner = "com.kuru.featureflow.CustomHiltTestRunner"
     }
@@ -46,6 +45,13 @@ android {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+        }
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
         }
     }
 }
@@ -121,4 +127,17 @@ dependencies {
     // Debug dependencies
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                groupId = "com.kuru"
+                artifactId = "featureflow"
+                version = "1.0.0"
+            }
+        }
+    }
 }
