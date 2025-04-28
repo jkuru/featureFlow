@@ -54,6 +54,14 @@ android {
             withJavadocJar()
         }
     }
+
+    libraryVariants.all {
+        outputs.all {
+            if (this is com.android.build.gradle.internal.api.BaseVariantOutputImpl) {
+                this.outputFileName = "dc-${buildType.name}.aar"
+            }
+        }
+    }
 }
 
 dependencies {
